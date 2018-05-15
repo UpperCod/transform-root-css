@@ -1,0 +1,30 @@
+{
+  "name": "rollup-root-css",
+  "version": "0.0.5",
+  "description": "returns the style rules as functions template",
+  "main": "index.js",
+  "module": "index.js",
+  "jsnext:main": "index.js",
+  "source": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "keywords": [
+    "preact"
+  ],
+  "author": "Matias Trujillo",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UpperCod/rollup-root-css"
+  },
+  "devDependencies": {
+    "rollup-plugin-buble": "^0.19.2"
+  },
+  "dependencies": {
+    "postcss": "^6.0.22",
+    "rollup-pluginutils": "^2.2.0"
+  }
+}
