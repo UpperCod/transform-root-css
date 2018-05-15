@@ -8,11 +8,6 @@ export default {
         }
     ],
     sourceMap: false,
-    external: ["postcss"],
-    watch: {
-        chokidar: {},
-        exclude: ["node_modules/**"]
-    },
     plugins: [
         buble({
             objectAssign: "Object.assign"

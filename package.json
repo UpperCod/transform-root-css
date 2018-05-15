@@ -1,10 +1,10 @@
 {
   "name": "transform-root-css",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "returns the style rules as functions template",
-  "main": "dist/cjs.js",
-  "module": "dist/es.js",
-  "jsnext:main": "dist/es.js",
+  "main": "index.js",
+  "module": "index.js",
+  "jsnext:main": "index.js",
   "source": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -19,9 +19,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/UpperCod/transform-root-css"
-  },
-  "devDependencies": {
-    "rollup-plugin-buble": "^0.19.2"
   },
   "dependencies": {
     "postcss": "^6.0.22"

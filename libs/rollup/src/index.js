@@ -1,5 +1,5 @@
 import { createFilter, dataToEsm } from "rollup-pluginutils";
-import transform from "./transform";
+import transform from "transform-root-css";
 
 function regExpExtension(ext) {
     return RegExp(ext.replace(/\./, "\\.") + "$", "g");
