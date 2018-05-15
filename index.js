@@ -1,10 +1,8 @@
-"use strict";
+'use strict';
 
-function _interopDefault(ex) {
-    return ex && typeof ex === "object" && "default" in ex ? ex["default"] : ex;
-}
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var postcss = _interopDefault(require("postcss"));
+var postcss = _interopDefault(require('postcss'));
 
 var config = {
     varRoot: ":root",
@@ -31,7 +29,7 @@ var config = {
             replace: function replace(context, take) {
                 return (
                     "${" +
-                    take.replace(/[^\s\t\n]+/g, function(use) {
+                    take.replace(/[^\s\t\n]+/g, function (use) {
                         if (/^[\"\'\?\:\|\&\<\=\!\d\+\*\-]+/.test(use)) {
                             return use;
                         } else {
@@ -56,9 +54,9 @@ function quoteScape(string) {
 function prepareSelector(selector, deep) {
     selector = clearSpace(selector);
     if (
-        config.patternsSelector.some(function(pattern) {
-            return pattern.find.test(selector) && pattern.scape;
-        })
+        config.patternsSelector.some(
+            function (pattern) { return pattern.find.test(selector) && pattern.scape; }
+        )
     ) {
         return selector;
     } else {
@@ -77,23 +75,19 @@ function setProp(props, ref) {
 }
 
 function translator(nodes, atrule, deep) {
-    if (atrule === void 0) atrule = [];
-    if (deep === void 0) deep = 0;
+    if ( atrule === void 0 ) atrule = [];
+    if ( deep === void 0 ) deep = 0;
 
     var rules = nodes
-        .map(function(node) {
+        .map(function (node) {
             switch (node.type) {
                 case "rule":
                     var selectors = node.selector
                         .split(",")
-                        .map(function(selector) {
-                            return prepareSelector(selector, deep);
-                        });
+                        .map(function (selector) { return prepareSelector(selector, deep); });
                     var props = {};
                     var childs = [];
-                    translator(node.nodes, atrule, deep + 1).forEach(function(
-                        value
-                    ) {
+                    translator(node.nodes, atrule, deep + 1).forEach(function (value) {
                         if (Array.isArray(value)) {
                             setProp(props, value);
                         } else {
@@ -126,28 +120,27 @@ function translator(nodes, atrule, deep) {
                     break;
             }
         })
-        .filter(function(value) {
-            return value;
-        });
+        .filter(function (value) { return value; });
 
     return deep ? rules : { rules: rules, atrule: atrule };
 }
 
 function createReplace(patterns, string) {
-    return patterns.reduce(function(string, pattern) {
-        return string.replace(pattern.find, pattern.replace);
-    }, string);
+    return patterns.reduce(
+        function (string, pattern) { return string.replace(pattern.find, pattern.replace); },
+        string
+    );
 }
 
 function createProps(props) {
     var str = "";
-    var loop = function(prop) {
-        [].concat(props[prop]).forEach(function(value) {
+    var loop = function ( prop ) {
+        [].concat(props[prop]).forEach(function (value) {
             str += prop + ":" + createReplace(config.patternsProp, value) + ";";
         });
     };
 
-    for (var prop in props) loop(prop);
+    for (var prop in props) loop( prop );
     return str;
 }
 
@@ -160,11 +153,10 @@ function createSelector(selector) {
 }
 
 function templateRules(childs, rules, parent) {
-    if (rules === void 0) rules = [];
-    if (parent === void 0) parent = "";
+    if ( rules === void 0 ) rules = [];
+    if ( parent === void 0 ) parent = "";
 
-    childs.forEach(function(rule) {
-        return rule.selectors.forEach(function(selector) {
+    childs.forEach(function (rule) { return rule.selectors.forEach(function (selector) {
             var before = selector.indexOf(config.varRoot) === 0 ? "." : "";
             selector = before + createSelector(parent + selector);
 
@@ -173,15 +165,15 @@ function templateRules(childs, rules, parent) {
             if (props) {
                 rules.push(templateRule(selector, props));
             }
-        });
-    });
+        }); }
+    );
     return rules;
 }
 
 function templateAlrule(atrule, rules, prefix) {
-    if (prefix === void 0) prefix = "@";
+    if ( prefix === void 0 ) prefix = "@";
 
-    atrule.forEach(function(rule) {
+    atrule.forEach(function (rule) {
         if (/media/.test(rule.selector)) {
             rules.push(
                 templateRule(
@@ -189,8 +181,7 @@ function templateAlrule(atrule, rules, prefix) {
                     templateRules(rule.childs.rules).join("")
                 )
             );
-        } else if (/supports|document/.test(rule.selector));
-        else if (/keyframes/.test(rule.selector)) {
+        } else if (/supports|document/.test(rule.selector)) ; else if (/keyframes/.test(rule.selector)) {
             rules.push(
                 templateRule(
                     prefix + rule.selector + " " + createSelector(rule.params),
@@ -202,9 +193,10 @@ function templateAlrule(atrule, rules, prefix) {
                 templateRule(
                     prefix + rule.selector + " " + createSelector(rule.params),
                     createProps(
-                        rule.childs.reduce(function(props, add) {
-                            return setProp(props, add);
-                        }, {})
+                        rule.childs.reduce(
+                            function (props, add) { return setProp(props, add); },
+                            {}
+                        )
                     )
                 )
             );
@@ -218,17 +210,10 @@ function transform(plugins) {
     return function parse(input) {
         var root = instance.process(input, { parser: postcss.parse }).root,
             result = translator(root.nodes);
-
         return templateAlrule(
             result.atrule,
             templateRules(result.rules).reverse()
-        ).map(function(rule) {
-            return (
-                "function(root){ return typeof root == 'object' ?`" +
-                quoteScape(rule) +
-                "`: ''}"
-            );
-        });
+        ).map(function (rule) { return "function(root){ return `" + quoteScape(rule) + "`}"; });
     };
 }
 

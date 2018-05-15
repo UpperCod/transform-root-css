@@ -196,15 +196,9 @@ export default function transform(plugins) {
     return function parse(input) {
         let root = instance.process(input, { parser: postcss.parse }).root,
             result = translator(root.nodes);
-
         return templateAlrule(
             result.atrule,
             templateRules(result.rules).reverse()
-        ).map(
-            rule =>
-                "function(root){ return typeof root == 'object' ?`" +
-                quoteScape(rule) +
-                "`: ''}"
-        );
+        ).map(rule => "function(root){ return `" + quoteScape(rule) + "`}");
     };
 }
