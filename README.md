@@ -2,6 +2,12 @@
 
 Parse root css se creó para herramientas de bundler, como [**rollup**](http://rollupjs.org).
 
+| soporte |estado|
+|---------|------|
+| [rollup](https://github.com/UpperCod/transform-root-css/tree/master/libs/rollup) |✔️|
+| parceljs | 👷 |
+| webpack | 👷 |
+
 La finalidad es simple transformar el css en funciones de plantilla, por ejemplo :
 
 #### Css de entrada.
