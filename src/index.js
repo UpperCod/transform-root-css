@@ -5,7 +5,7 @@ let config = {
     quoteScape: /([\\]*)(\`)/g,
     patternsSelector: [
         {
-            find: /((?:\:root|\$\{root\.id\})\[)/g,
+            find: /((?:\:root|\$\{root\.id\})\[(?!\$\{root\.state\}))/g,
             replace: "$1${root.state}"
         },
         {
