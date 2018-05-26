@@ -9,12 +9,20 @@ var config = {
     quoteScape: /([\\]*)(\`)/g,
     patternsSelector: [
         {
-            find: /((?:\:root|\$\{root\.id\})\[(?!\$\{root\.state\}))/g,
-            replace: "$1${root.state}"
+            /**
+             * It allows to add a prefix to the state to the selector by attribute
+             * @example: root [checked] =>. $ {root.cn} [$ {root.st} checked]
+             */
+            find: /((?:\:root|\$\{root\.cn\})\[(?!\$\{root\.px\}))/g,
+            replace: "$1${root.px}"
         },
         {
+            /**
+             * will replace the selector :root
+             * @example :root => ${root.cn}
+             */
             find: /\:root/g,
-            replace: "${root.id}",
+            replace: "${root.cn}",
             scape: true
         },
         {
@@ -25,19 +33,16 @@ var config = {
     ],
     patternsProp: [
         {
-            find: /@var\(([^\)\(]+)\)/g,
+            /**
+             * Allows you to use the properties of root as template variables
+             * @example color : root(primary) => color : ${root.primary}
+             */
+            find: /(?:root)\(([^\)\(]+)\)/g,
             replace: function replace(context, take) {
-                return (
-                    "${" +
-                    take.replace(/[^\s\t\n]+/g, function (use) {
-                        if (/^[\"\'\?\:\|\&\<\=\!\d\+\*\-]+/.test(use)) {
-                            return use;
-                        } else {
-                            return "root." + use;
-                        }
-                    }) +
-                    "}"
-                );
+                take = take.match(/([\w\d]+)/);
+                take = (take && take[1]) || "";
+                take = /^\d/.test(take) ? "" : take;
+                return take ? ("${root." + take + "}") : "";
             }
         }
     ]
@@ -208,12 +213,22 @@ function templateAlrule(atrule, rules, prefix) {
 function transform(plugins) {
     var instance = postcss(plugins);
     return function parse(input) {
-        var root = instance.process(input, { parser: postcss.parse }).root,
-            result = translator(root.nodes);
-        return templateAlrule(
-            result.atrule,
-            templateRules(result.rules).reverse()
-        ).map(function (rule) { return "function(root){ return `" + quoteScape(rule) + "`}"; });
+        return instance
+            .process(input, { parser: postcss.parse })
+            .then(function (ref) {
+                var root = ref.root;
+
+                return translator(root.nodes);
+        })
+            .then(function (result) { return templateAlrule(
+                    result.atrule,
+                    templateRules(result.rules).reverse()
+                ); }
+            )
+            .then(function (rules) { return rules.map(
+                    function (rule) { return "function(root){ return `" + quoteScape(rule) + "`}"; }
+                ); }
+            );
     };
 }
 

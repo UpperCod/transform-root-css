@@ -1,6 +1,6 @@
 # rollup-root-css
 
-Transforma mediante [**transform-root-css**](https://github.com/uppercod/transform-root-css), las reglas de un documento css a funciones de plantilla.
+Transform using [**transform-root-css**] (https://github.com/uppercod/transform-root-css), the rules of a css document to template functions.
 
 ```js
 import rootcss from "rollup-root-css";

@@ -1,6 +1,6 @@
 {
   "name": "rollup-root-css",
-  "version": "0.0.8",
+  "version": "0.1.5",
   "description": "returns the style rules as functions template",
   "main": "index.js",
   "module": "index.js",
@@ -26,6 +26,6 @@
   "dependencies": {
     "postcss": "^6.0.22",
     "rollup-pluginutils": "^2.2.0",
-    "transform-root-css": "^0.0.3"
+    "transform-root-css": "^0.1.0"
   }
 }

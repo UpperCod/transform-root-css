@@ -1,88 +1,88 @@
 # transform-root-css
 
-Parse root css se creó para herramientas de bundler, como [**rollup**](http://rollupjs.org).
+It is created as a utility to be used within bundler tools, such as [** rollup **] (http://rollupjs.org).
 
-| soporte |estado|
+| support |state|
 |---------|------|
 | [rollup](https://github.com/UpperCod/transform-root-css/tree/master/libs/rollup) |✔️|
 | parceljs | 👷 |
 | webpack | 👷 |
 
-La finalidad es simple transformar el css en funciones de plantilla, por ejemplo :
+The purpose is simple to transform the css into template functions, for example:
 
-#### Css de entrada.
+#### Input CSS.
 ```css
 :root{
-   color : black;
+  color : black;
 }
 ```
-#### function de salida
+#### Output
 ```js
-function(root){
-   return typeof root == "object" : `${root.id}{color:black;}` : "";
-}
+[function(root){
+  return typeof root == "object" : `${root.cn}{color:black;}` : "";
+}]
 ```
-> Su estilo siempre será  dinámico e inmutable.
 
-## Instancia
+## Instance
 
 ```js
 import transform from "transform-root-css";
 import autoprefixer from "autoprefixer";
 
 transform([autoprefixer])(`
-    :root{
-        display : flex;
-    }
-`);
+   :root{
+       display : flex;
+   }
+`).then((rules)=>{
+   console.log(rules)
+})
 ```
 
-**transform-root-css**, transforma todas las reglas del css en funciones de plantilla agrupadas en un arreglo.
+**transform-root-css**, transforms all css rules into template functions grouped in an array.
 
-listas para usar en el cliente con poca sobrecarga.
+ready to use in the client with little overload.
 
 ## Postcss
 
-transform-root-css  utiliza **postcss** para parsear por primera vez el estilo, luego agrupa las reglas genera algunos cambios a base de **pseudo-clase** útiles.
+transform-root-css uses **postcss** to walk the style for the first time, then group the rules generates some changes based on ** pseudo-class ** useful.
 
 ## pseudo-clase
 
 ### :root
 
-apunta a la raíz del estilo, esto quiere decir que root para efectos de la funcion template sera remplazado por `${root.id}`, esto es porque  `root.id` debe ser el nombre de la clase prinsipal.
+Points to the root of the style, this means that root for the purposes of the template function will be replaced by `${root.cn}`, this is because `root.cn` must be the name of the prinsipal class.
 
 ### :root[state]
 
-si root se acompaña de un selector de estado, sera remplazado por `${root.id}[${root.state}state]`.
+if root is accompanied by a state selector, it will be replaced by `${root.cn}[${root.px}state]`.
 
 ### :global
 
-:global evita que se anteponga :root como contexto por defecto
+`:global` evita que se anteponga :root como contexto por defecto
 
-### @var
+### `root(property)`
 
-su uso sólo es posible dentro de la definición de propiedades y permite obtener atributos de root
+`:global` prevents it from being prefixed `:root` as the default context
 
 ```css
 :root{
-   animation : @var(id)-zoom 1s ease alternate;
+  animation : root(cn)-zoom 1s ease alternate;
 }
 @keyframes :root-zoom{
-   0%{
-       transform : scale(1)
-   }
-   100%{
-       transform : scale(1.5)
-   }
+  0%{
+      transform : scale(1)
+  }
+  100%{
+      transform : scale(1.5)
+  }
 }
 ```
-> De esta forma el keyframes poseera un identificador único como animación y mediante `@var(id)` ud puede acceder a ese identificador.
 
-** @var también acepta expresiones **
+> In this way the keyframes will have a unique identifier as an animation and through `root(cn)` you can access that identifier.
+
 
 ```css
 :root{
-   color : @var(color || "black");
+  color : root(color);
 }
 ```
-> root pude contener más de una propiedad por lo que ud puede acceder a ellas desde usando @var

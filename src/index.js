@@ -5,12 +5,20 @@ let config = {
     quoteScape: /([\\]*)(\`)/g,
     patternsSelector: [
         {
-            find: /((?:\:root|\$\{root\.id\})\[(?!\$\{root\.state\}))/g,
-            replace: "$1${root.state}"
+            /**
+             * It allows to add a prefix to the state to the selector by attribute
+             * @example: root [checked] =>. $ {root.cn} [$ {root.st} checked]
+             */
+            find: /((?:\:root|\$\{root\.cn\})\[(?!\$\{root\.px\}))/g,
+            replace: "$1${root.px}"
         },
         {
+            /**
+             * will replace the selector :root
+             * @example :root => ${root.cn}
+             */
             find: /\:root/g,
-            replace: "${root.id}",
+            replace: "${root.cn}",
             scape: true
         },
         {
@@ -21,19 +29,16 @@ let config = {
     ],
     patternsProp: [
         {
-            find: /@var\(([^\)\(]+)\)/g,
+            /**
+             * Allows you to use the properties of root as template variables
+             * @example color : root(primary) => color : ${root.primary}
+             */
+            find: /(?:root)\(([^\)\(]+)\)/g,
             replace(context, take) {
-                return (
-                    "${" +
-                    take.replace(/[^\s\t\n]+/g, use => {
-                        if (/^[\"\'\?\:\|\&\<\=\!\d\+\*\-]+/.test(use)) {
-                            return use;
-                        } else {
-                            return "root." + use;
-                        }
-                    }) +
-                    "}"
-                );
+                take = take.match(/([\w\d]+)/);
+                take = (take && take[1]) || "";
+                take = /^\d/.test(take) ? "" : take;
+                return take ? `\${root.${take}}` : "";
             }
         }
     ]
@@ -194,11 +199,19 @@ function templateAlrule(atrule, rules, prefix = "@") {
 export default function transform(plugins) {
     let instance = postcss(plugins);
     return function parse(input) {
-        let root = instance.process(input, { parser: postcss.parse }).root,
-            result = translator(root.nodes);
-        return templateAlrule(
-            result.atrule,
-            templateRules(result.rules).reverse()
-        ).map(rule => "function(root){ return `" + quoteScape(rule) + "`}");
+        return instance
+            .process(input, { parser: postcss.parse })
+            .then(({ root }) => translator(root.nodes))
+            .then(result =>
+                templateAlrule(
+                    result.atrule,
+                    templateRules(result.rules).reverse()
+                )
+            )
+            .then(rules =>
+                rules.map(
+                    rule => "function(root){ return `" + quoteScape(rule) + "`}"
+                )
+            );
     };
 }
