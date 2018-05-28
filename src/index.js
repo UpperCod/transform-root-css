@@ -5,12 +5,19 @@ let config = {
     quoteScape: /([\\]*)(\`)/g,
     patternsSelector: [
         {
+            find: /([\s]){0,}(\&)([\s]){0,}/g,
+            replace: "",
+            scape: false
+        },
+        {
             /**
              * It allows to add a prefix to the state to the selector by attribute
              * @example: root [checked] =>. $ {root.cn} [$ {root.st} checked]
              */
-            find: /((?:\:root|\$\{root\.cn\})\[(?!\$\{root\.px\}))/g,
-            replace: "$1${root.px}"
+            find: /\:root((?:\[([^\]]+)\]){1,}){1}/g,
+            replace(content, attrs) {
+                return ":root" + attrs.replace(/\[/g, "[${root.px}");
+            }
         },
         {
             /**
@@ -18,7 +25,7 @@ let config = {
              * @example :root => ${root.cn}
              */
             find: /\:root/g,
-            replace: "${root.cn}",
+            replace: ".${root.cn}",
             scape: true
         },
         {
@@ -53,7 +60,6 @@ function quoteScape(string) {
 }
 
 function prepareSelector(selector, deep) {
-    selector = clearSpace(selector);
     if (
         config.patternsSelector.some(
             pattern => pattern.find.test(selector) && pattern.scape
@@ -61,9 +67,7 @@ function prepareSelector(selector, deep) {
     ) {
         return selector;
     } else {
-        let and = selector.match(/^\&([\s\t\n]*)(.+)/);
-        selector = and ? and[2] : " " + selector;
-        return deep ? selector : "." + config.varRoot + selector;
+        return deep ? selector : config.varRoot + " " + selector;
     }
 }
 
@@ -73,7 +77,7 @@ function setProp(props, [index, value]) {
 }
 
 function translator(nodes, atrule = [], deep = 0) {
-    let rules = nodes
+    let rules = (nodes || [])
         .map(node => {
             switch (node.type) {
                 case "rule":
@@ -142,19 +146,18 @@ function templateRule(selector, props) {
 }
 
 function createSelector(selector) {
-    return createReplace(config.patternsSelector, selector);
+    return clearSpace(createReplace(config.patternsSelector, selector));
 }
 
 function templateRules(childs, rules = [], parent = "") {
     childs.forEach(rule =>
         rule.selectors.forEach(selector => {
-            let before = selector.indexOf(config.varRoot) === 0 ? "." : "";
-            selector = before + createSelector(parent + selector);
-
+            selector = parent + " " + selector;
+            let nextSelector = createSelector(selector);
             templateRules(rule.childs, rules, selector);
             let props = createProps(rule.props);
             if (props) {
-                rules.push(templateRule(selector, props));
+                rules.push(templateRule(nextSelector, props));
             }
         })
     );
@@ -180,17 +183,24 @@ function templateAlrule(atrule, rules, prefix = "@") {
                 )
             );
         } else {
-            rules.push(
-                templateRule(
-                    prefix + rule.selector + " " + createSelector(rule.params),
-                    createProps(
-                        rule.childs.reduce(
-                            (props, add) => setProp(props, add),
-                            {}
+            if (/import/.test(rule.selector)) {
+                rules.unshift(prefix + rule.selector + " " + rule.params);
+            } else {
+                rules.push(
+                    templateRule(
+                        prefix +
+                            rule.selector +
+                            " " +
+                            createSelector(rule.params),
+                        createProps(
+                            rule.childs.reduce(
+                                (props, add) => setProp(props, add),
+                                {}
+                            )
                         )
                     )
-                )
-            );
+                );
+            }
         }
     });
     return rules;

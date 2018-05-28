@@ -9,12 +9,19 @@ var config = {
     quoteScape: /([\\]*)(\`)/g,
     patternsSelector: [
         {
+            find: /([\s]){0,}(\&)([\s]){0,}/g,
+            replace: "",
+            scape: false
+        },
+        {
             /**
              * It allows to add a prefix to the state to the selector by attribute
              * @example: root [checked] =>. $ {root.cn} [$ {root.st} checked]
              */
-            find: /((?:\:root|\$\{root\.cn\})\[(?!\$\{root\.px\}))/g,
-            replace: "$1${root.px}"
+            find: /\:root((?:\[([^\]]+)\]){1,}){1}/g,
+            replace: function replace(content, attrs) {
+                return ":root" + attrs.replace(/\[/g, "[${root.px}");
+            }
         },
         {
             /**
@@ -22,7 +29,7 @@ var config = {
              * @example :root => ${root.cn}
              */
             find: /\:root/g,
-            replace: "${root.cn}",
+            replace: ".${root.cn}",
             scape: true
         },
         {
@@ -57,7 +64,6 @@ function quoteScape(string) {
 }
 
 function prepareSelector(selector, deep) {
-    selector = clearSpace(selector);
     if (
         config.patternsSelector.some(
             function (pattern) { return pattern.find.test(selector) && pattern.scape; }
@@ -65,9 +71,7 @@ function prepareSelector(selector, deep) {
     ) {
         return selector;
     } else {
-        var and = selector.match(/^\&([\s\t\n]*)(.+)/);
-        selector = and ? and[2] : " " + selector;
-        return deep ? selector : "." + config.varRoot + selector;
+        return deep ? selector : config.varRoot + " " + selector;
     }
 }
 
@@ -83,7 +87,7 @@ function translator(nodes, atrule, deep) {
     if ( atrule === void 0 ) atrule = [];
     if ( deep === void 0 ) deep = 0;
 
-    var rules = nodes
+    var rules = (nodes || [])
         .map(function (node) {
             switch (node.type) {
                 case "rule":
@@ -154,7 +158,7 @@ function templateRule(selector, props) {
 }
 
 function createSelector(selector) {
-    return createReplace(config.patternsSelector, selector);
+    return clearSpace(createReplace(config.patternsSelector, selector));
 }
 
 function templateRules(childs, rules, parent) {
@@ -162,13 +166,12 @@ function templateRules(childs, rules, parent) {
     if ( parent === void 0 ) parent = "";
 
     childs.forEach(function (rule) { return rule.selectors.forEach(function (selector) {
-            var before = selector.indexOf(config.varRoot) === 0 ? "." : "";
-            selector = before + createSelector(parent + selector);
-
+            selector = parent + " " + selector;
+            var nextSelector = createSelector(selector);
             templateRules(rule.childs, rules, selector);
             var props = createProps(rule.props);
             if (props) {
-                rules.push(templateRule(selector, props));
+                rules.push(templateRule(nextSelector, props));
             }
         }); }
     );
@@ -194,17 +197,24 @@ function templateAlrule(atrule, rules, prefix) {
                 )
             );
         } else {
-            rules.push(
-                templateRule(
-                    prefix + rule.selector + " " + createSelector(rule.params),
-                    createProps(
-                        rule.childs.reduce(
-                            function (props, add) { return setProp(props, add); },
-                            {}
+            if (/import/.test(rule.selector)) {
+                rules.unshift(prefix + rule.selector + " " + rule.params);
+            } else {
+                rules.push(
+                    templateRule(
+                        prefix +
+                            rule.selector +
+                            " " +
+                            createSelector(rule.params),
+                        createProps(
+                            rule.childs.reduce(
+                                function (props, add) { return setProp(props, add); },
+                                {}
+                            )
                         )
                     )
-                )
-            );
+                );
+            }
         }
     });
     return rules;

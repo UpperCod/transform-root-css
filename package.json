@@ -1,6 +1,6 @@
 {
   "name": "transform-root-css",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "returns the style rules as functions template",
   "main": "index.js",
   "module": "index.js",
